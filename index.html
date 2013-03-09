@@ -1,0 +1,235 @@
+<!DOCTYPE html >
+<html lang="en" dir="ltr">
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>RingoJS Package Registry</title>
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,600&amp;subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+    <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:200,300,400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" media="screen, handheld" title="CSS Stylesheet" href="/css/bootstrap.css" />
+    <script type="text/javascript" src="/js/lib/jquery.js"></script>
+    <script type="text/javascript" src="/js/lib/lodash.js"></script>
+    <script type="text/javascript" src="/js/lib/bootstrap.js"></script>
+    <script type="text/javascript" src="/js/lib/swig.js"></script>
+    <script type="text/javascript" src="/js/lib/yabble.js"></script>
+    <script type="text/javascript">
+        require.setModuleRoot('/js/');
+        require.run('/js/main');
+    </script>
+    <style type="text/css">
+        .halfwidth {
+            max-width: 50%;
+        }
+        .mini-details {
+            font-size:small;
+        }
+
+        .detail-right {
+            border-left: 3px solid #cccccc;
+            padding-left: 5px;
+        }
+
+        .navigation {
+            background-color: #C1CCD1;
+            margin-bottom: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- base html -->
+    <div class="container-fluid">
+        <div class="row-fluid navigation">
+            <div class="span6 offset2">
+                <nav>
+                    <h1>
+                        RingoJs Package Registry
+                    </h1>
+                    <p class="pull-right">
+                        <a href="https://github.com/grob/rp/wiki/">Upload your package</a>
+                    </p>
+                </nav>
+                <form class="form-search">
+                    <input id="search" type="text" class="input-medium search-query" placeholder="Search" />
+                    <button type="button" class="btn">Search</button>
+                </form>
+            </div>
+        </div>
+        <div id="content" class="row-fluid">
+        </div>
+    </div>
+
+    <!-- index html -->
+    <script id="tmpl-package-list" type="text/html">
+        <div id="sidebar" class="span2">
+            <h4>Popular Tags</h4>
+            <ul>
+                <li> <a href="#/search/test">web</a> </li>
+                <li> <a href="#/search/database">database</a> </li>
+                <li> <a href="#/search/ringojs">ringojs</a></li>
+            </ul>
+        </div>
+        <div class="span9">
+            {% for package in packages %}
+            <div class="well well-small">
+                <p class="pull-right muted">
+                    Version {{ package.latest }}<br/>
+                    Released {{ package.modified | date("d. M.") }}
+                </p>
+                <h2><a href="#/packages/{{ package.name }}">
+                    {{ package.name }}</a>
+                </h2>
+                <p class="lead">
+                    {{ package.description }}
+                </p>
+                <p>
+                    <a href="#/readme/{{ package.name }}" id="viewreadme-button-{{package.name}}" role="button" class="btn">View Readme</a>
+                </p>
+                </div>
+            {% endfor %}
+        </div>
+    </script>
+
+    <!-- readme modal -->
+    <script id="tmpl-package-readme" type="text/html">
+        <div id class="modal hide">
+            <div class="modal-body">
+                <p>{{package.readme}}</p>
+            </div>
+                <div class="modal-footer">
+                <a class="btn btn-primary" data-dismiss="modal">Close</a>
+            </div>
+        </div>
+    </script>
+
+    <!-- packages/ page -->
+    <script id="tmpl-package-detail" type="text/html">
+        <div class="span5 offset2">
+            <h1> {{ name }} </h1>
+            <p> by
+                {% if author.web %}
+                    <a href="{{ author.web }}">{{ author.name }}</a>
+                {% else %}
+                    {{ author.name }}
+                {% endif %}
+            </p>
+            <p>
+                {{ description }}
+            </p>
+
+            <h4> Keywords </h4>
+            {% for keyword in keywords %}
+                <a href="#/search/{{ keyword | url_encode }}">{{ keyword }}</a>
+            {% endfor %}
+
+            <table class="table halfwidth">
+            <thead>
+                <tr><th>Version</th>
+                <th>Released</th></tr>
+            </thead>
+
+            {% for version in versions %}
+            <tr>
+                <td>
+                    <a href="#/packages/{{ name }}/{{ version.version }}">{{ version.version }}</a>
+                </td>
+                <td>
+                    {{ version.modified | date("d. M. Y, H:i") }}
+                </td>
+            </tr>
+            {% endfor %}
+            </table>
+        </div>
+
+        <div class="span3 well well-small">
+            <h3> <a href="/download/{{ versions[0].filename }}"> Download {{name}} </a></h3>
+            <div class="container-fluid">
+                <h4>Version: {{ latest }}</h4>
+                <h4>Released: {{modified | date("d. M. H:i") }}</h4>
+            </div>
+            <div class="mini-details">
+                {% if engines|length > 0 %}
+                    <dt>Engines</dt>
+                    <dd>
+                        <ul>
+                        {% for spec in engines %}
+                            <li>{{ loop.key }} ({{ spec }})</li>
+                        {% endfor %}
+                        </ul>
+                    </dd>
+                {% endif %}
+                <dt>Dependencies</dt>
+                <dd>
+                    <ul>
+                    {% if dependencies|length > 0 %}
+                        {% for spec in dependencies %}
+                            <li><a href="/packages/{{ loop.key | url_encode }}">{{ loop.key }}</a> {{ spec }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>none</li>
+                    {% endif %}
+                    </ul>
+                </dd>
+
+                {% if repositories|length > 0 %}
+                    <dt>Repositories</dt>
+                    <dd>
+                        <ul>
+                        {% for repo in repositories %}
+                        <li>{{ repo.type }}: <a href="{{ repo.url }}{{ repo.path }}">{{ repo.url }}{{ repo.path }}</a></li>
+                        {% endfor %}
+                        </ul>
+                    </dd>
+                {% endif %}
+                {% if contributors|length > 0 %}
+                <dt>Contributors</dt>
+                <dd>
+                    <ul>
+                    {% for contributor in contributors %}
+                        <li>
+                            {% if contributor.web %}
+                                <a href="{{ contributor.web }}">{{ contributor.name }}</a>
+                            {% else %}
+                                {{ contributor.name }}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </dd>
+            {% endif %}
+            {% if maintainers|length > 0 %}
+                <dt>Maintainers</dt>
+                <dd>
+                    <ul>
+                    {% for maintainer in maintainers %}
+                        <li>
+                            {% if maintainer.web %}
+                                <a href="{{ maintainer.web }}">{{ maintainer.name }}</a>
+                            {% else %}
+                                {{ maintainer.name }}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                    </ul>
+                </dd>
+            {% endif %}
+            {% if licenses|length > 0 %}
+                <dt>Licenses</dt>
+                <dd>
+                    <ul>
+                    {% for license in licenses %}
+                        <li><a href="{{ license.url }}">{{ license.type }}</a></li>
+                    {% endfor %}
+                    </ul>
+                </dd>
+            {% endif %}
+            <dt>Last modified</dt>
+            <dd>{{ modified | date("d. M. Y, H:i") }}</dd>
+            </div>
+        </div>
+
+    </script>
+
+</body>
+</html>
