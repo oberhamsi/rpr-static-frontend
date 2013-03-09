@@ -1,0 +1,5 @@
+todo
+
+  * version switching #/packages/foo/versionname
+  * show loading... when README is clicked
+  * show error msg if no README available
