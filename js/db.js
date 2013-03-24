@@ -1,9 +1,14 @@
+var apiHrefPrefix = '';
+if (document.location.href.indexOf('ringojs.org') > -1) {
+    apiHrefPrefix = 'http://packages.ringojs.org'
+}
+
 exports.packages = {
 	byName: function(name) {
-		return $.ajax('/api/packages/' + name , {dataType: 'json'});
+		return $.ajax(apiHrefPrefix + '/api/packages/' + name , {dataType: 'json'});
 	},
 	search: function(query, offset) {
-		return $.ajax('/api/search', {
+		return $.ajax(apiHrefPrefix + '/api/search', {
 			type: 'GET',
 			data: {
 				q: query || '',
